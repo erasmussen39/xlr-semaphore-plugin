@@ -9,8 +9,9 @@
 #
 
 
-import base64, hashlib, time
-from com.xebialabs.xlrelease.api.v1.forms import Variable;
+import base64, time
+from com.xebialabs.deployit.exception import NotFoundException
+from com.xebialabs.xlrelease.api.v1.forms import Variable
 
 current_milli_time = lambda: int(round(time.time() * 1000))
 
@@ -28,15 +29,12 @@ class SemaphoreClient(object):
         return SemaphoreClient(current_release, current_phase, configuration_api, release_api, phase_api)
 
     def get_db(self, name, vars):
-        #print "Searching for semaphore db: %s\n" % name
         key = "global.%s" % name
         db = None
         for v in vars:
-            #print "v.key : %s\n" % v.key
             if v.key == key:
                 db = v
         if db is not None:
-            #print db.type
             return db
         else:
             self.initialize_db(name)
@@ -58,30 +56,56 @@ class SemaphoreClient(object):
     def update_db(self, db):
         self.config_api.updateGlobalVariable(db)
 
-    def initialize_key(self, db, key):
+    def force_unlock_db(self, db, key):
+        db = self.refresh_db(db)
         mapping = db.getValue()
-        mapping['%s_UNLOCK_HASH' % key] = ""
+        del mapping['%s_UNLOCK_HASH' % key]
+        db.setValue(mapping)
+        self.update_db(db)
 
     def is_locked(self, db, key):
         locked = '%s_UNLOCK_HASH' % key in db.getValue()
-        print "Checking lock status for key %s in db %s -- %s\n" % (key, db.getKey(), locked)
-        return locked
+        if not locked:
+            print "Key: %s not found in DB: %s -- NOT LOCKED" % (key, db.getKey())
+            return False
+        else:
+            # Check release status and phases status for end cases.
+            unlock_hash = db.getValue()['%s_UNLOCK_HASH' % key]
+            lock_info = base64.b64decode(unlock_hash).split(',')
+            release_id = lock_info[0]
+            phase_id = lock_info[1]
+            try:
+                release = self.release_api.getRelease(release_id)
+                release_status = release.getStatus()
+                if str(release_status) in {'ABORTED', 'COMPLETED'}:
+                    print "Release: %s associated with Key: %s in DB: %s had status: %s -- UNLOCKED" % (release_id, key, db.getKey(), release_status)
+                    self.force_unlock_db(db, key)
+                    return False
+            except NotFoundException:
+                # Release no longer exists (archived), force a release of the lock.
+                print "Release: %s associated with Key: %s in DB: %s no longer exists -- UNLOCKED" % (release_id, key, db.getKey())
+                self.force_unlock_db(db, key)
+                return False
+            phase = self.phase_api.getPhase(phase_id)
+            phase_status = phase.getStatus()
+            if str(phase_status) in {'ABORTED', 'COMPLETED', 'SKIPPED'}:
+                print "Phase: %s associated with Key: %s in DB: %s and Release: %s had status: %s -- UNLOCKED" % (release_id, key, db.getKey(), release_id, phase_status)
+                self.force_unlock_db(db, key)
+                return False
+        print "Key: %s in DB: %s -- LOCKED" % (key, db.getKey())
+        return True
 
     def core_lock(self, variables):
         db_name = variables['repository_name']
-        #print "db_name: %s\n" % db_name
-
         if db_name is not None and db_name:
             db = self.get_db(db_name, self.config_api.globalVariables)
         else:
             db_name = "DEFAULT_SEMAPHORE_DB"
             db = self.get_db(db_name, self.config_api.globalVariables)
-
         while self.is_locked(db, variables['key']):
             time.sleep(variables['polling_interval'])
             db = self.refresh_db(db)
-
-        #unlock_hash = hashlib.sha224("%s,%s" % (self.release.getId(), self.phase.getId())).hexdigest()
+        db = self.refresh_db(db)
         unlock_hash = base64.b64encode("%s,%s,%s" % (self.release.getId(), self.phase.getId(), str(current_milli_time())))
         mapping = db.getValue()
         mapping['%s_UNLOCK_HASH' % variables['key']] = unlock_hash
