@@ -2,12 +2,12 @@ language: java
 sudo: false
 deploy:
   provider: releases
-  file: build/libs/xlr-semaphore-core-1.0.0-beta.jar
+  file: build/libs/xlr-semaphore-plugin-1.0.0.jar
   skip_cleanup: true
   on:
     all_branches: true
     tags: true
-    repo: xebialabs-community/xlr-semaphore-core
+    repo: xebialabs-community/xlr-semaphore-plugin
   api_key:
     secure:
       secure: mnZQ+yLceBg1DvBdkbU8KrLdfC950ZY74OXUGKdHfG8dm62SB1wTVrfzPekL2YCYnBUOGMgVwuiH/YvQCwWxM3lorm2XZczYzORUIMzhfLdyFyzmscoI5jVBhB5jTnz50sJPilRZEaN6QXkYOaYYVNXunZktbDDdgy7BEZPJMFYOP2au5y4qJnR6P6WRskzczksLxdXuSDPaP+3bUxPF0tL1iLkU5sL+rTswM5ejMPBVIKoOPsBncDodOz0QGhkSj310zJOPHlBtGBQb/8eZDfP6YtwFRtxgMWcAzEuwP7nbWByU7XUQoudldMD67vsJ+MM1eplKjE9xdFafedqa/HInELmAa8OCT3dBb1NesqspGSu4YDrwsMe8GD9+h2asP85lCPZehnIfGEaUTXpiTeLbfK8jmDLuWcuIC8NPMBAP9oZdPYepn/nue5Vz42BAQwrGwplAov/JVfjeLg6mD3Mk9TniaVdjGYKnTLFewCjmxrk8xDVXRNR7oUKa04Tsmwn/DwFL2BXyOx6nONlecv1HJ9Hv2wskP1aCWY2mm6+8ibDqpyJ4IlEiuADTVFRktDwCMA0+WQT2MjFYfZ7BOoIOJPkhwzykvqeKV7omNvvzftbTOmlR3yDVlq7fEBHkT8LEnTDL89TyhB9a7ewmrQEubACbfbMzB/uGGSLvYck=
