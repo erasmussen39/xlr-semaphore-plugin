@@ -14,16 +14,15 @@
     <!-- Plugin Task Configurations -->
     <type type="core.Semaphore" extends="xlrelease.PythonScript" virtual="true">
         <property name="scriptLocation" default="core/SemaphoreTask.py" hidden="true"/>
+        <property name="repository_name" kind="string" category="input" label="Repository Name" required="false"/>
         <property name="output" category="output" kind="string" size="large" label="Output" description="The output returned from execution of the Plugin task."/>
     </type>
 
     <type type="core.Lock" extends="core.Semaphore" label="Lock">
         <property name="key" kind="string" category="input" label="Key" required="true"/>
-        <property name="repository_name" kind="string" category="input" label="Repository Name" required="false"/>
         <property name="polling_interval" kind="integer" category="input" label="Polling Interval" required="true" default="60"/>
     </type>
-    <type type="core.Release" extends="core.Semaphore" label="Release">
-        <property name="release_hash" kind="string" category="input" label="Release Hash" required="true"/>
-        <property name="repository_name" kind="string" category="input" label="Repository Name" required="false"/>
+    <type type="core.Unlock" extends="core.Semaphore" label="Unlock">
+        <property name="unlock_hash" kind="string" category="input" label="Unlock Hash" required="true"/>
     </type>
 </synthetic>

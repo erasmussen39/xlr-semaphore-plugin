@@ -28,10 +28,12 @@ class SemaphoreClient(object):
     def get_client(current_release, current_phase, configuration_api, release_api, phase_api):
         return SemaphoreClient(current_release, current_phase, configuration_api, release_api, phase_api)
 
-    def get_db(self, name, vars):
+    def get_db(self, name, global_vars):
+        if name is None or not name:
+            name = "DEFAULT_SEMAPHORE_DB"
         key = "global.%s" % name
         db = None
-        for v in vars:
+        for v in global_vars:
             if v.key == key:
                 db = v
         if db is not None:
@@ -92,16 +94,12 @@ class SemaphoreClient(object):
                 print "Phase: %s associated with Key: %s in DB: %s and Release: %s had status: %s -- UNLOCKED" % (release_id, key, db.getKey(), release_id, phase_status)
                 self.force_unlock_db(db, key)
                 return False
-        print "Key: %s in DB: %s -- LOCKED" % (key, db.getKey())
+        print "Key: %s in DB: %s -- LOCKED -- by Release: %s" % (key, db.getKey(), release_id)
         return True
 
     def core_lock(self, variables):
         db_name = variables['repository_name']
-        if db_name is not None and db_name:
-            db = self.get_db(db_name, self.config_api.globalVariables)
-        else:
-            db_name = "DEFAULT_SEMAPHORE_DB"
-            db = self.get_db(db_name, self.config_api.globalVariables)
+        db = self.get_db(db_name, self.config_api.globalVariables)
         while self.is_locked(db, variables['key']):
             time.sleep(variables['polling_interval'])
             db = self.refresh_db(db)
@@ -113,23 +111,19 @@ class SemaphoreClient(object):
         self.update_db(db)
         return {'output': unlock_hash}
 
-    def core_release(self, variables):
-        if variables['release_hash'] is None:
-            raise Exception("You must specify the release hash.")
+    def core_unlock(self, variables):
+        if variables['unlock_hash'] is None:
+            raise Exception("You must specify the unlock hash.")
         db_name = variables['repository_name']
-        if db_name is not None and db_name:
-            db = self.get_db(db_name, self.config_api.globalVariables)
-        else:
-            db_name = "DEFAULT_SEMAPHORE_DB"
-            db = self.get_db(db_name, self.config_api.globalVariables)
+        db = self.get_db(db_name, self.config_api.globalVariables)
         mapping = db.getValue()
         found = False
         for key, value in mapping.items():
-            if value == variables['release_hash']:
+            if value == variables['unlock_hash']:
                 del mapping[key]
                 found = True
         if not found:
-            raise Exception("Could not locate specified hash: %s" % variables['release_hash'])
+            raise Exception("Could not locate specified hash: %s" % variables['unlock_hash'])
         db.setValue(mapping)
         self.update_db(db)
-        return {'output': 'released hash: %s from reppository db: %s' % (variables['release_hash'], db_name  )}
+        return {'output': 'unlocked hash: %s from reppository db: %s' % (variables['unlock_hash'], db_name)}
