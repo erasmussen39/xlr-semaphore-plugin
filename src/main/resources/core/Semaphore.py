@@ -90,7 +90,7 @@ class SemaphoreClient(object):
                 return False
             phase = self.phase_api.getPhase(phase_id)
             phase_status = phase.getStatus()
-            if str(phase_status) in {'ABORTED', 'COMPLETED', 'SKIPPED'}:
+            if str(phase_status) in {'ABORTED', 'SKIPPED'}:
                 print "Phase: %s associated with Key: %s in DB: %s and Release: %s had status: %s -- UNLOCKED" % (release_id, key, db.getKey(), release_id, phase_status)
                 self.force_unlock_db(db, key)
                 return False
