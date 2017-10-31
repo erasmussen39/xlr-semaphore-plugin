@@ -19,10 +19,12 @@
     </type>
 
     <type type="core.Lock" extends="core.Semaphore" label="Lock">
+        <property name="iconLocation" default="core/lock.png" hidden="true"/>
         <property name="key" kind="string" category="input" label="Key" required="true"/>
         <property name="polling_interval" kind="integer" category="input" label="Polling Interval" required="true" default="60"/>
     </type>
     <type type="core.Unlock" extends="core.Semaphore" label="Unlock">
+        <property name="iconLocation" default="core/unlock.png" hidden="true"/>
         <property name="unlock_hash" kind="string" category="input" label="Unlock Hash" required="true"/>
     </type>
 </synthetic>
