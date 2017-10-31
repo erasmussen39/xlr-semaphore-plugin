@@ -2,7 +2,7 @@ language: java
 sudo: false
 deploy:
   provider: releases
-  file: build/libs/xlr-semaphore-plugin-1.0.1.jar
+  file: build/libs/xlr-semaphore-plugin-2.0.0.jar
   skip_cleanup: true
   on:
     all_branches: true
