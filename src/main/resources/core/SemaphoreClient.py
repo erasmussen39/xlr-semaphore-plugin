@@ -74,7 +74,7 @@ class SemaphoreClient(object):
 
     @synchronized_with_attr("lock")
     def force_unlock_db(self, db, key):
-        db = self.get_db(db.getKey())
+        db = self.find_db(db.getKey())
         mapping = db.getValue()
         del mapping['%s_UNLOCK_HASH' % key]
         db.setValue(mapping)
